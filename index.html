@@ -6,21 +6,30 @@
     <style>
         body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
         
-        /* The Original Corner Logo */
+        /* LOGO: CENTERED & HOVERING AT START */
         #game-logo {
             position: fixed;
-            top: 20px;
-            left: 20px;
-            width: 150px;
-            z-index: 9999;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 280px;
+            z-index: 6000;
             pointer-events: none;
+            transition: all 1.2s cubic-bezier(0.19, 1, 0.22, 1);
+            animation: bobbing 3s ease-in-out infinite;
+        }
+
+        @keyframes bobbing {
+            0%, 100% { margin-top: 0px; }
+            50% { margin-top: -25px; }
         }
 
         #start-trigger {
             position: fixed; inset: 0; background: #000; z-index: 5000;
-            display: flex; align-items: center; justify-content: center;
+            display: flex; align-items: flex-end; justify-content: center;
             color: white; cursor: pointer; text-transform: uppercase; 
-            letter-spacing: 10px; font-size: 3rem;
+            letter-spacing: 12px; font-size: 2rem; padding-bottom: 120px;
+            font-weight: bold;
         }
 
         #menu {
@@ -31,19 +40,25 @@
             z-index: 1000; padding-bottom: 80px;
         }
 
-        #loading-ui { color: #ffd700; margin-bottom: 20px; font-weight: bold; font-size: 2rem; text-transform: uppercase; }
-        
-        #enter-btn { 
-            background: white; color: black; border: none; padding: 20px 80px; 
-            font-size: 1.5rem; cursor: pointer; text-transform: uppercase; font-weight: bold; 
-            display: none; box-shadow: 0 0 20px #fff; 
+        #loading-ui { color: #ffd700; margin-bottom: 20px; font-weight: bold; font-size: 2.2rem; text-shadow: 2px 2px 10px #000; }
+        #enter-btn { background: white; color: black; border: none; padding: 22px 90px; font-size: 1.4rem; cursor: pointer; font-weight: bold; display: none; text-transform: uppercase; }
+
+        /* MISSION OBJECTIVE BOX */
+        #objective {
+            position: fixed;
+            bottom: 40px;
+            left: 40px;
+            background: rgba(0,0,0,0.85);
+            color: white;
+            padding: 20px;
+            border-left: 6px solid #ffd700;
+            display: none;
+            z-index: 2000;
+            max-width: 300px;
+            line-height: 1.4;
         }
 
-        #hud { 
-            position: fixed; top: 10px; right: 10px; color: white; 
-            background: rgba(0,0,0,0.5); padding: 10px; font-size: 12px; 
-            pointer-events: none; border-radius: 5px; 
-        }
+        #hud { position: fixed; top: 15px; right: 15px; color: white; background: rgba(0,0,0,0.7); padding: 12px; font-size: 11px; border-radius: 4px; letter-spacing: 1px; }
     </style>
 </head>
 <body>
@@ -57,10 +72,12 @@
     <button id="enter-btn">ENTER GARAGE</button>
 </div>
 
-<div id="hud">
-    WASD: MOVE | SCROLL: ZOOM<br>
-    PLUS/MINUS: MANUAL ZOOM
+<div id="objective">
+    <span style="color: #ffd700; font-weight: bold;">MISSION OBJECTIVE</span><br>
+    Explore the garage and inspect the fleet.
 </div>
+
+<div id="hud">WASD: MOVE | SCROLL: ZOOM</div>
 
 <script type="importmap">
     {
@@ -85,7 +102,6 @@ class KobiGame {
         };
         this.active = false;
         this.keys = {};
-        this.zoomDistance = 45;
         this.displayPercent = 0;
         this.targetPercent = 0;
         this._init();
@@ -94,19 +110,14 @@ class KobiGame {
     _init() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 15000);
-        
         this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-        this.renderer.shadowMap.enabled = true;
         document.body.appendChild(this.renderer.domElement);
 
-        const ambient = new THREE.AmbientLight(0xffffff, 2.0);
-        this.scene.add(ambient);
-
-        const sun = new THREE.DirectionalLight(0xffffff, 3.0);
-        sun.position.set(50, 150, 50);
-        sun.castShadow = true;
+        this.scene.add(new THREE.AmbientLight(0xffffff, 2.5));
+        const sun = new THREE.DirectionalLight(0xffffff, 2.5);
+        sun.position.set(10, 50, 10);
         this.scene.add(sun);
 
         this.bgm = new Audio(this.assets.music);
@@ -137,7 +148,7 @@ class KobiGame {
             this.targetPercent = 100;
             const check = setInterval(() => {
                 if(this.displayPercent >= 100) {
-                    document.getElementById('loading-ui').innerHTML = "GARAGE LOADED";
+                    document.getElementById('loading-ui').innerText = "PREPARING COMPLETE";
                     document.getElementById('enter-btn').style.display = 'block';
                     clearInterval(check);
                 }
@@ -149,23 +160,28 @@ class KobiGame {
         const loader = new GLTFLoader(manager);
         loader.setDRACOLoader(draco);
 
-        loader.load(this.assets.arena, (gltf) => {
-            this.arena = gltf.scene;
-            this.scene.add(this.arena);
-        }, (xhr) => this.targetPercent = Math.min(Math.round((xhr.loaded/xhr.total)*70), 99));
-
+        loader.load(this.assets.arena, (gltf) => this.scene.add(gltf.scene));
         loader.load(this.assets.kobi, (gltf) => {
             this.player = gltf.scene;
-            this.scene.add(this.player);
+            this.player.scale.setScalar(0.5);
             this.player.position.set(15, 0, 15);
-            this.player.scale.setScalar(0.5); // Adjusting scale back to a basic setting
+            this.scene.add(this.player);
             this.mixer = new THREE.AnimationMixer(this.player);
             if(gltf.animations[0]) this.mixer.clipAction(gltf.animations[0]).play();
-        }, (xhr) => this.targetPercent = Math.min(70 + Math.round((xhr.loaded/xhr.total)*30), 99));
+        });
 
         document.getElementById('enter-btn').onclick = () => {
             this.active = true;
             document.getElementById('menu').remove();
+            document.getElementById('objective').style.display = 'block';
+            
+            // Move logo to the top-left corner
+            const logo = document.getElementById('game-logo');
+            logo.style.animation = 'none';
+            logo.style.top = '25px';
+            logo.style.left = '25px';
+            logo.style.transform = 'none';
+            logo.style.width = '130px';
         };
         this._animate();
     }
@@ -174,15 +190,14 @@ class KobiGame {
         requestAnimationFrame(() => this._animate());
         if(this.mixer) this.mixer.update(0.016);
         if(this.player && this.active) {
-            const speed = 0.5;
-            if(this.keys['KeyW']) this.player.translateZ(speed);
-            if(this.keys['KeyS']) this.player.translateZ(-speed);
+            if(this.keys['KeyW']) this.player.translateZ(0.5);
+            if(this.keys['KeyS']) this.player.translateZ(-0.5);
             if(this.keys['KeyA']) this.player.rotation.y += 0.05;
             if(this.keys['KeyD']) this.player.rotation.y -= 0.05;
 
-            const offset = new THREE.Vector3(0, 15, -40).applyQuaternion(this.player.quaternion);
+            const offset = new THREE.Vector3(0, 15, -45).applyQuaternion(this.player.quaternion);
             this.camera.position.lerp(this.player.position.clone().add(offset), 0.1);
-            this.camera.lookAt(this.player.position);
+            this.camera.lookAt(this.player.position.x, 6, this.player.position.z);
         } else {
             this.camera.position.set(80, 80, 150);
             this.camera.lookAt(0,0,0);

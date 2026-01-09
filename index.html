@@ -4,77 +4,45 @@
     <meta charset="UTF-8">
     <title>THE LIFE OF AKA KOBI</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Syncopate:wght@700&family=Inter:wght@900&display=swap');
-
-        body { margin: 0; overflow: hidden; background: #000; font-family: 'Inter', sans-serif; }
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial', sans-serif; }
         
-        /* ORIGINAL HOVERING LOGO - ALWAYS VISIBLE */
+        /* The Original Corner Logo */
         #game-logo {
             position: fixed;
-            top: 25px;
-            left: 25px;
-            width: 130px; 
-            z-index: 9999; /* Highest priority */
+            top: 20px;
+            left: 20px;
+            width: 150px;
+            z-index: 9999;
             pointer-events: none;
-            filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
         }
 
-        /* START SCREEN */
         #start-trigger {
             position: fixed; inset: 0; background: #000; z-index: 5000;
             display: flex; align-items: center; justify-content: center;
-            color: #fff; cursor: pointer; text-transform: uppercase; 
-            font-family: 'Bruno Ace SC', cursive;
-            letter-spacing: 25px; font-size: 3.8rem;
-            transition: all 0.5s ease-in-out;
-            text-shadow: 0 0 15px rgba(255,255,255,0.4);
-            animation: flicker-in 2s ease-in-out both;
+            color: white; cursor: pointer; text-transform: uppercase; 
+            letter-spacing: 10px; font-size: 3rem;
         }
 
-        @keyframes flicker-in {
-            0% { opacity: 0; }
-            11% { opacity: 1; text-shadow: 0 0 20px #fff; }
-            12% { opacity: 0; }
-            21% { opacity: 1; }
-            100% { opacity: 1; letter-spacing: 25px; }
-        }
-
-        #start-trigger:hover {
-            letter-spacing: 35px;
-            color: #ffd700;
-            text-shadow: 0 0 20px #ffd700, 0 0 50px #ffd700;
-        }
-
-        /* LOADING MENU */
         #menu {
             position: fixed; inset: 0; 
-            background: linear-gradient(to top, rgba(0,0,0,0.4), transparent),
-                        url('https://dl.dropboxusercontent.com/scl/fi/8icpavjho04s8tcc5cqjs/ChatGPT-Image-Jan-6-2026-12_36_01-AM.png?rlkey=nr6na9w61icmcxh0wwexh8qte&raw=1') no-repeat center center;
+            background: url('https://dl.dropboxusercontent.com/scl/fi/8icpavjho04s8tcc5cqjs/ChatGPT-Image-Jan-6-2026-12_36_01-AM.png?rlkey=nr6na9w61icmcxh0wwexh8qte&raw=1') no-repeat center center;
             background-size: cover;
             display: none; flex-direction: column; align-items: center; justify-content: flex-end;
-            z-index: 1000; padding-bottom: 100px;
+            z-index: 1000; padding-bottom: 80px;
         }
 
-        #loading-ui { 
-            color: #ffd700; margin-bottom: 30px; font-weight: 900; font-size: 1.8rem; 
-            text-transform: uppercase; letter-spacing: 8px; font-family: 'Syncopate', sans-serif;
-            animation: pulse-gold 2s infinite ease-in-out;
-            text-shadow: 0 0 15px rgba(0,0,0,1);
-        }
-
+        #loading-ui { color: #ffd700; margin-bottom: 20px; font-weight: bold; font-size: 2rem; text-transform: uppercase; }
+        
         #enter-btn { 
-            background: #fff; color: #000; border: none; padding: 22px 90px; 
-            font-size: 1.2rem; cursor: pointer; text-transform: uppercase; 
-            font-weight: 900; display: none; letter-spacing: 5px;
-            font-family: 'Bruno Ace SC', cursive;
+            background: white; color: black; border: none; padding: 20px 80px; 
+            font-size: 1.5rem; cursor: pointer; text-transform: uppercase; font-weight: bold; 
+            display: none; box-shadow: 0 0 20px #fff; 
         }
 
         #hud { 
-            position: fixed; top: 20px; right: 20px; color: white; 
-            background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(8px);
-            padding: 15px 25px; font-size: 10px; pointer-events: none; 
-            border-radius: 4px; border-right: 4px solid #ffd700;
-            letter-spacing: 2px;
+            position: fixed; top: 10px; right: 10px; color: white; 
+            background: rgba(0,0,0,0.5); padding: 10px; font-size: 12px; 
+            pointer-events: none; border-radius: 5px; 
         }
     </style>
 </head>
@@ -85,13 +53,13 @@
 <div id="start-trigger">LET'S PLAY</div>
 
 <div id="menu">
-    <div id="loading-ui">PREPARING <span id="percent">0</span>%</div>
+    <div id="loading-ui">PREPARING: <span id="percent">0</span>%</div>
     <button id="enter-btn">ENTER GARAGE</button>
 </div>
 
 <div id="hud">
-    W/S — POSITION | A/D — ROTATE<br>
-    WHEEL — ZOOM
+    WASD: MOVE | SCROLL: ZOOM<br>
+    PLUS/MINUS: MANUAL ZOOM
 </div>
 
 <script type="importmap">
@@ -111,7 +79,7 @@ import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 class KobiGame {
     constructor() {
         this.assets = {
-            arena: 'https://dl.dropboxusercontent.com/scl/fi/6ra7lo5ht/arena.glb?rlkey=iqwd9sj1fva3k8t3z8fy9e9x2&raw=1',
+            arena: 'https://dl.dropboxusercontent.com/scl/fi/6ra7lo5htqjecxlv6w99f/arena.glb?rlkey=iqwd9sj1fva3k8t3z8fy9e9x2&raw=1',
             kobi: 'https://dl.dropboxusercontent.com/scl/fi/c9xbtomrvs8cm8t006fq/player.glb?rlkey=sb4tj4zr4x5kegbcp8qsn93g1&raw=1',
             music: 'https://dl.dropboxusercontent.com/scl/fi/lg4b8xgncie3x1b1ez4h8/Igzotic-Money-chaser-Official-Music-Video.mp3?rlkey=umjddw56vwumbnd2qjkg0ft2e&raw=1'
         };
@@ -125,23 +93,18 @@ class KobiGame {
 
     _init() {
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.FogExp2(0x000000, 0.0015);
         this.camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 15000);
         
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
+        this.renderer = new THREE.WebGLRenderer({ antialias: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-        this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure = 1.2;
         this.renderer.shadowMap.enabled = true;
-        this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         document.body.appendChild(this.renderer.domElement);
 
-        const ambient = new THREE.AmbientLight(0xffffff, 2.5);
+        const ambient = new THREE.AmbientLight(0xffffff, 2.0);
         this.scene.add(ambient);
 
-        const sun = new THREE.DirectionalLight(0xffffff, 4.0);
+        const sun = new THREE.DirectionalLight(0xffffff, 3.0);
         sun.position.set(50, 150, 50);
         sun.castShadow = true;
         this.scene.add(sun);
@@ -151,18 +114,11 @@ class KobiGame {
 
         window.onkeydown = (e) => this.keys[e.code] = true;
         window.onkeyup = (e) => this.keys[e.code] = false;
-        window.onwheel = (e) => {
-            this.zoomDistance += e.deltaY * 0.05;
-            this.zoomDistance = Math.max(10, Math.min(this.zoomDistance, 250));
-        };
 
         document.getElementById('start-trigger').onclick = () => {
             this.bgm.play();
-            document.getElementById('start-trigger').style.opacity = '0';
-            setTimeout(() => {
-                document.getElementById('start-trigger').style.display = 'none';
-                document.getElementById('menu').style.display = 'flex';
-            }, 600);
+            document.getElementById('start-trigger').style.display = 'none';
+            document.getElementById('menu').style.display = 'flex';
             this._load();
             this._animateCounter();
         };
@@ -181,7 +137,7 @@ class KobiGame {
             this.targetPercent = 100;
             const check = setInterval(() => {
                 if(this.displayPercent >= 100) {
-                    document.getElementById('loading-ui').innerHTML = "ACCESS GRANTED";
+                    document.getElementById('loading-ui').innerHTML = "GARAGE LOADED";
                     document.getElementById('enter-btn').style.display = 'block';
                     clearInterval(check);
                 }
@@ -195,22 +151,16 @@ class KobiGame {
 
         loader.load(this.assets.arena, (gltf) => {
             this.arena = gltf.scene;
-            this.arena.traverse(n => { if(n.isMesh) n.receiveShadow = true; });
             this.scene.add(this.arena);
-            const box = new THREE.Box3().setFromObject(this.arena);
-            this.arena.position.sub(box.getCenter(new THREE.Vector3())).y = 0;
         }, (xhr) => this.targetPercent = Math.min(Math.round((xhr.loaded/xhr.total)*70), 99));
 
         loader.load(this.assets.kobi, (gltf) => {
             this.player = gltf.scene;
-            this.player.traverse(n => { if(n.isMesh) n.castShadow = true; });
-            const kBox = new THREE.Box3().setFromObject(this.player);
-            this.player.scale.setScalar(12 / kBox.getSize(new THREE.Vector3()).y);
-            this.player.position.set(15, 0, 15);
             this.scene.add(this.player);
+            this.player.position.set(15, 0, 15);
+            this.player.scale.setScalar(0.5); // Adjusting scale back to a basic setting
             this.mixer = new THREE.AnimationMixer(this.player);
-            const idle = gltf.animations.find(a => a.name.toLowerCase().includes('idle'));
-            if(idle) this.mixer.clipAction(idle).play();
+            if(gltf.animations[0]) this.mixer.clipAction(gltf.animations[0]).play();
         }, (xhr) => this.targetPercent = Math.min(70 + Math.round((xhr.loaded/xhr.total)*30), 99));
 
         document.getElementById('enter-btn').onclick = () => {
@@ -229,9 +179,10 @@ class KobiGame {
             if(this.keys['KeyS']) this.player.translateZ(-speed);
             if(this.keys['KeyA']) this.player.rotation.y += 0.05;
             if(this.keys['KeyD']) this.player.rotation.y -= 0.05;
-            const offset = new THREE.Vector3(0, this.zoomDistance * 0.4, -this.zoomDistance).applyQuaternion(this.player.quaternion);
+
+            const offset = new THREE.Vector3(0, 15, -40).applyQuaternion(this.player.quaternion);
             this.camera.position.lerp(this.player.position.clone().add(offset), 0.1);
-            this.camera.lookAt(this.player.position.x, 6, this.player.position.z);
+            this.camera.lookAt(this.player.position);
         } else {
             this.camera.position.set(80, 80, 150);
             this.camera.lookAt(0,0,0);
